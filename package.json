@@ -6,7 +6,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/VasilyAK/reactDevEnv.git"
+        "url": "git+https://github.com/VasilyAK/VAKToDo.git"
     },
     "main": "index.js",
     "scripts": {
