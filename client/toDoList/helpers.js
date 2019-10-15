@@ -1,20 +1,4 @@
 /**
- * @typedef {String} TaskStatus
- * @example
- * 'done'
- * 'failed'
- * 'expected'
- */
-
-/**
- * @typedef {Object} FullTask
- * @property {String} id идентификатор задания
- * @property {Date} date дата задания
- * @property {String} taskText текст задания
- * @property {String} status состояние задания
- */
-
-/**
  * Определить, принадлежат ли даты к одному и тому же дню
  * @param {Date} date1 первая дата для сравнения
  * @param {Date} date2 вторая дата для сравнения

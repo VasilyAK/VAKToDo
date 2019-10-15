@@ -219,7 +219,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 }
 
                 return result;
-            }, [])
+            }, []);
 
             return { ...state, toDoTaskList, err: null };
         }
@@ -251,12 +251,11 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case GET_TODO_TASKS_FOR_DATE_FULFILLED: {
             let { selectedTasksDate, toDoTaskList } = payload;
 
-            toDoTaskList = toDoTaskList.map(task => ({
-                id: task._id,
-                date: new Date(task.date),
-                taskText: task.taskText,
-                status: task.status,
-            }));
+            toDoTaskList = toDoTaskList.map(task => {
+                task.date = new Date(task.date);
+
+                return task;
+            });
             toDoTaskList = sortTaskListByDate(toDoTaskList);
 
             return { ...state, selectedTasksDate, toDoTaskList, err: null };

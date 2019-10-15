@@ -1,26 +1,3 @@
-/**
- * @typedef {String} TaskStatus
- * @example
- * 'done'
- * 'failed'
- * 'expected'
- */
-
-/**
- * @typedef {Object} Task
- * @property {Date} date дата задания
- * @property {String} taskText текст задания
- * @property {TaskStatus} status состояние задания
- */
-
-/**
- * @typedef {Object} FullTask
- * @property {String} id идентификатор задания
- * @property {Date} date дата задания
- * @property {String} taskText текст задания
- * @property {String} status состояние задания
- */
-
 const {
     CREATE_TODO_TASK,
     CHANGE_TODO_TASK,
@@ -28,28 +5,31 @@ const {
     DELETE_TODO_TASK,
     GET_TODO_TASKS_FOR_DATE,
 } = require('../actionTypes/toDoList');
-
 const app = require('express').Router();
-const Task = require('../models/Task');
+const TaskSchema = require('../models/TaskSchema');
+const Task = require('../classes/toDoList/Task');
 
 /**
  * Сохранить в базу новое задание
- * @param {Task} taskData данные нового задания
- * @return {Promise<FullTask|undefined>}
+ * @param {TaskData} taskData данные нового задания
+ * @return {Promise<TaskData|undefined>}
+ * @memberof ToDoTask
  */
 async function saveTask(taskData) {
-    return await new Task(taskData).save();
+    const savedTask = await new TaskSchema(taskData).save();
+    return new Task(savedTask).fullData;
 }
 
 /**
  * Создать в базе набор тестовых заданий за текущую дату
- * @return {Promise}
+ * @return {Promise<TaskData[]>}
+ * @memberof ToDoTask
  */
 function createTestData() {
     return new Promise(async (res, rej) => {
         const promises = [];
 
-        Task.getTestData().forEach(taskData => {
+        TaskSchema.getTestData().forEach(taskData => {
             promises.push(saveTask(taskData));
         });
 
@@ -65,14 +45,13 @@ app.post('/', async (req, res) => {
     switch (type) {
         // сохранить в базу новое задание
         case CREATE_TODO_TASK: {
-            const { id, date, taskText, status } = payload;
-            const newData = { date, taskText, status };
-            const result = await saveTask(newData);
+            const newTask = new Task(payload).data;
+            const result = await saveTask(newTask);
 
             if (result) {
                 res.json({ id: result.id });
             } else {
-                res.send({ err: `Task ${id} not created` });
+                res.send({ err: `Task ${newTask.id} not created` });
             }
 
             break;
@@ -80,14 +59,13 @@ app.post('/', async (req, res) => {
 
         // изменить задание
         case CHANGE_TODO_TASK: {
-            const { id, date, taskText, status } = payload;
-            const updateData = { date, taskText, status };
-            const result = await Task.updateOne({ _id: id }, updateData);
+            const updatedTask = new Task(payload).data;
+            const result = await TaskSchema.updateOne({ _id: updatedTask.id }, updatedTask);
 
             if (result.nModified) {
-                res.json({ id });
+                res.json({ id: updatedTask.id });
             } else {
-                res.send({ err: `Task ${id} not found` });
+                res.send({ err: `Task ${updatedTask.id} not found` });
             }
 
             break;
@@ -95,7 +73,7 @@ app.post('/', async (req, res) => {
 
         // перевести задание в состояние "done"
         case DONE_TODO_TASK: {
-            const result = await Task.updateOne({ _id: payload }, { status: 'done' });
+            const result = await TaskSchema.updateOne({ _id: payload }, { status: 'done' });
 
             if (result.nModified) {
                 res.json({ id: payload });
@@ -108,7 +86,7 @@ app.post('/', async (req, res) => {
 
         // удалить задание
         case DELETE_TODO_TASK: {
-            const result = await Task.deleteOne({ _id: payload });
+            const result = await TaskSchema.deleteOne({ _id: payload });
 
             if (result.ok) {
                 res.json({ id: payload });
@@ -123,14 +101,17 @@ app.post('/', async (req, res) => {
         case GET_TODO_TASKS_FOR_DATE: {
             const from = new Date(new Date(payload).setHours(0, 0, 0, 0));
             const to = new Date(new Date(payload).setHours(24, 0, 0, 0));
-            const taskList = await Task.find()
+            const today = new Date().setHours(0, 0, 0, 0);
+            let taskList = await TaskSchema.find()
                 .where('date')
                 .gte(from)
                 .lte(to);
 
+            taskList = taskList.map(taskData => new Task(taskData).fullData);
+
             if (taskList.length) {
                 res.json(taskList);
-            } else if (new Date(payload).setHours(0, 0, 0, 0) === new Date().setHours(0, 0, 0, 0)) {
+            } else if (from === today) {
                 const testTaskList = await createTestData();
 
                 res.json(testTaskList);
@@ -142,7 +123,7 @@ app.post('/', async (req, res) => {
         }
 
         default:
-            res.send(new Error('Unknown action'));
+            res.send({ err: 'Unknown action' });
             break;
     }
 });

@@ -14,7 +14,7 @@
         "ds": "webpack-dev-server --open --config webpack.dev.config.js",
         "ns": "nodemon server.js",
         "jest": "jest",
-        "jsdoc": "jsdoc client/ -r -c ./jsdoc.config.js",
+        "jsdoc": "jsdoc client/ server/ -r -c ./jsdoc.config.js",
         "lc": "node_modules/.bin/eslint client/",
         "ls": "node_modules/.bin/eslint server/"
     },
