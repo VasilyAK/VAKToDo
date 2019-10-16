@@ -59,9 +59,8 @@ app.post('/', async (req, res) => {
 
         // изменить задание
         case CHANGE_TODO_TASK: {
-            const updatedTask = new Task(payload).data;
+            const updatedTask = new Task(payload).fullData;
             const result = await TaskSchema.updateOne({ _id: updatedTask.id }, updatedTask);
-
             if (result.nModified) {
                 res.json({ id: updatedTask.id });
             } else {

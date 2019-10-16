@@ -107,7 +107,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case CHANGE_TODO_TASK: {
             const { id, date } = payload;
             const mutableItem = { ...initMutableItem };
-            const toDoTaskList = state.toDoTaskList.reduce((result, task) => {
+            let toDoTaskList = state.toDoTaskList.reduce((result, task) => {
                 if (task.id === id) {
                     if (isEqualDays(state.selectedTasksDate, date)) {
                         result.push(payload);
@@ -120,6 +120,8 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
                 return result;
             }, []);
+
+            toDoTaskList = sortTaskListByDate(toDoTaskList);
 
             return { ...state, mutableItem, toDoTaskList, err: null };
         }
