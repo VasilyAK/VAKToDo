@@ -101,7 +101,7 @@ app.post('/', async (req, res) => {
         case GET_TODO_TASKS_FOR_DATE: {
             const from = new Date(new Date(payload).setHours(0, 0, 0, 0));
             const to = new Date(new Date(payload).setHours(24, 0, 0, 0));
-            const today = new Date().setHours(0, 0, 0, 0);
+            const today = new Date(new Date().setHours(0, 0, 0, 0));
             let taskList = await TaskSchema.find()
                 .where('date')
                 .gte(from)
@@ -111,7 +111,7 @@ app.post('/', async (req, res) => {
 
             if (taskList.length) {
                 res.json(taskList);
-            } else if (from === today) {
+            } else if (from.getTime() === today.getTime()) {
                 const testTaskList = await createTestData();
 
                 res.json(testTaskList);
