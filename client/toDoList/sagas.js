@@ -1,20 +1,4 @@
-import {
-    CREATE_TODO_TASK,
-    CREATE_TODO_TASK_FULFILLED,
-    CREATE_TODO_TASK_REJECTED,
-    CHANGE_TODO_TASK,
-    CHANGE_TODO_TASK_FULFILLED,
-    CHANGE_TODO_TASK_REJECTED,
-    DONE_TODO_TASK,
-    DONE_TODO_TASK_FULFILLED,
-    DONE_TODO_TASK_REJECTED,
-    DELETE_TODO_TASK,
-    DELETE_TODO_TASK_FULFILLED,
-    DELETE_TODO_TASK_REJECTED,
-    GET_TODO_TASKS_FOR_DATE,
-    GET_TODO_TASKS_FOR_DATE_FULFILLED,
-    GET_TODO_TASKS_FOR_DATE_REJECTED,
-} from './actionTypes';
+import aTypes from './actionTypes';
 import { call, put, fork, takeEvery, takeLatest } from 'redux-saga/effects';
 import { rootURL, fetchData } from '~/api.js';
 
@@ -39,7 +23,7 @@ function* createToDoTask(action) {
         }
 
         yield put({
-            type: CREATE_TODO_TASK_FULFILLED,
+            type: aTypes.CREATE_TODO_TASK_FULFILLED,
             payload: {
                 id: action.payload.id,
                 newId: response,
@@ -47,7 +31,7 @@ function* createToDoTask(action) {
         });
     } catch (err) {
         yield put({
-            type: CREATE_TODO_TASK_REJECTED,
+            type: aTypes.CREATE_TODO_TASK_REJECTED,
             payload: {
                 id: action.payload.id,
                 err,
@@ -69,12 +53,12 @@ function* changeToDoTask(action) {
         }
 
         yield put({
-            type: CHANGE_TODO_TASK_FULFILLED,
+            type: aTypes.CHANGE_TODO_TASK_FULFILLED,
             payload: response,
         });
     } catch (err) {
         yield put({
-            type: CHANGE_TODO_TASK_REJECTED,
+            type: aTypes.CHANGE_TODO_TASK_REJECTED,
             payload: {
                 id: action.payload.id,
                 err,
@@ -96,12 +80,12 @@ function* doneToDoTask(action) {
         }
 
         yield put({
-            type: DONE_TODO_TASK_FULFILLED,
+            type: aTypes.DONE_TODO_TASK_FULFILLED,
             payload: response,
         });
     } catch (err) {
         yield put({
-            type: DONE_TODO_TASK_REJECTED,
+            type: aTypes.DONE_TODO_TASK_REJECTED,
             payload: {
                 id: action.payload,
                 err,
@@ -123,12 +107,12 @@ function* deleteToDoTask(action) {
         }
 
         yield put({
-            type: DELETE_TODO_TASK_FULFILLED,
+            type: aTypes.DELETE_TODO_TASK_FULFILLED,
             payload: response,
         });
     } catch (err) {
         yield put({
-            type: DELETE_TODO_TASK_REJECTED,
+            type: aTypes.DELETE_TODO_TASK_REJECTED,
             payload: {
                 id: action.payload,
                 err,
@@ -150,7 +134,7 @@ function* getToDoTasksForDate(action) {
         }
 
         yield put({
-            type: GET_TODO_TASKS_FOR_DATE_FULFILLED,
+            type: aTypes.GET_TODO_TASKS_FOR_DATE_FULFILLED,
             payload: {
                 selectedTasksDate: action.payload,
                 toDoTaskList: response,
@@ -158,7 +142,7 @@ function* getToDoTasksForDate(action) {
         });
     } catch (err) {
         yield put({
-            type: GET_TODO_TASKS_FOR_DATE_REJECTED,
+            type: aTypes.GET_TODO_TASKS_FOR_DATE_REJECTED,
             payload: {
                 selectedTasksDate: action.payload,
                 err,
@@ -168,23 +152,23 @@ function* getToDoTasksForDate(action) {
 }
 
 function* watchCreateToDoTask() {
-    yield takeEvery(CREATE_TODO_TASK, createToDoTask);
+    yield takeEvery(aTypes.CREATE_TODO_TASK, createToDoTask);
 }
 
 function* watchChangeToDoTask() {
-    yield takeEvery(CHANGE_TODO_TASK, changeToDoTask);
+    yield takeEvery(aTypes.CHANGE_TODO_TASK, changeToDoTask);
 }
 
 function* watchDoneToDoTask() {
-    yield takeEvery(DONE_TODO_TASK, doneToDoTask);
+    yield takeEvery(aTypes.DONE_TODO_TASK, doneToDoTask);
 }
 
 function* watchDeleteToDoTask() {
-    yield takeEvery(DELETE_TODO_TASK, deleteToDoTask);
+    yield takeEvery(aTypes.DELETE_TODO_TASK, deleteToDoTask);
 }
 
 function* watchGetTasksForDate() {
-    yield takeLatest(GET_TODO_TASKS_FOR_DATE, getToDoTasksForDate);
+    yield takeLatest(aTypes.GET_TODO_TASKS_FOR_DATE, getToDoTasksForDate);
 }
 
 export default function* toDoListSagas() {

@@ -1,22 +1,4 @@
-import {
-    CREATE_TODO_TASK,
-    CREATE_TODO_TASK_FULFILLED,
-    CREATE_TODO_TASK_REJECTED,
-    CHANGE_TODO_TASK,
-    CHANGE_TODO_TASK_FULFILLED,
-    CHANGE_TODO_TASK_REJECTED,
-    DONE_TODO_TASK,
-    DONE_TODO_TASK_FULFILLED,
-    DONE_TODO_TASK_REJECTED,
-    DELETE_TODO_TASK,
-    DELETE_TODO_TASK_FULFILLED,
-    DELETE_TODO_TASK_REJECTED,
-    GET_TODO_TASKS_FOR_DATE_FULFILLED,
-    GET_TODO_TASKS_FOR_DATE_REJECTED,
-    SET_MUTABLE_ITEM_ID,
-    SET_MUTABLE_ITEM_DATE,
-    SET_MUTABLE_ITEM_TASK_TEXT,
-} from './actionTypes';
+import aTypes from './actionTypes';
 import { isEqualDays, resolveAwaitingItem, sortTaskListByDate, findAvailableNewTaskId } from '~/toDoList/helpers';
 
 let awaitingCreateToDoTasks = [];
@@ -26,7 +8,7 @@ let awaitingDeleteToDoTasks = [];
 
 const initMutableItem = {
     id: null,
-    date: new Date(),
+    date: null,
     taskText: '',
 };
 
@@ -41,14 +23,13 @@ const initState = {
 const reducersToDoList = (state = initState, { type, payload }) => {
     switch (type) {
         // запрос на создание нового задания вернул новое задание
-        case CREATE_TODO_TASK: {
+        case aTypes.CREATE_TODO_TASK: {
             if (isEqualDays(state.selectedTasksDate, payload.date)) {
                 const mutableItem = { ...initMutableItem };
                 let toDoTaskList = [...state.toDoTaskList];
 
                 toDoTaskList.push(payload);
                 toDoTaskList = sortTaskListByDate(toDoTaskList);
-                awaitingCreateToDoTasks.push(payload);
 
                 return {
                     ...state,
@@ -59,10 +40,16 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 };
             }
 
-            return { ...state, err: null };
+            awaitingCreateToDoTasks.push(payload);
+
+            return {
+                ...state,
+                newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks),
+                err: null,
+            };
         }
 
-        case CREATE_TODO_TASK_FULFILLED: {
+        case aTypes.CREATE_TODO_TASK_FULFILLED: {
             const { id, newId } = payload;
             const awaitingItem = awaitingCreateToDoTasks.find(awaitingItem => awaitingItem.id === id);
             let toDoTaskList = [...state.toDoTaskList];
@@ -83,7 +70,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на создание нового задания вернул ошибку
-        case CREATE_TODO_TASK_REJECTED: {
+        case aTypes.CREATE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
             const awaitingItem = awaitingCreateToDoTasks.find(awaitingItem => awaitingItem.id === id);
             let toDoTaskList = [...state.toDoTaskList];
@@ -104,7 +91,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на изменение задания вернул измененное задание
-        case CHANGE_TODO_TASK: {
+        case aTypes.CHANGE_TODO_TASK: {
             const { id, date } = payload;
             const mutableItem = { ...initMutableItem };
             let toDoTaskList = state.toDoTaskList.reduce((result, task) => {
@@ -126,7 +113,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             return { ...state, mutableItem, toDoTaskList, err: null };
         }
 
-        case CHANGE_TODO_TASK_FULFILLED: {
+        case aTypes.CHANGE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
             awaitingChangeToDoTasks = resolveAwaitingItem(awaitingChangeToDoTasks, id);
@@ -135,7 +122,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на изменение задания вернул ошибку
-        case CHANGE_TODO_TASK_REJECTED: {
+        case aTypes.CHANGE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
             const awaitingItem = awaitingChangeToDoTasks.find(awaitingItem => awaitingItem.id === id);
             let toDoTaskList = [...state.toDoTaskList];
@@ -168,7 +155,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
         // запрос на изменение статуса задания на "Выполнено" вернул
         // идентификатор обновленного задания
-        case DONE_TODO_TASK: {
+        case aTypes.DONE_TODO_TASK: {
             const toDoTaskList = state.toDoTaskList.map(task => {
                 if (task.id === payload) {
                     const { id, status } = task;
@@ -183,7 +170,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             return { ...state, toDoTaskList, err: null };
         }
 
-        case DONE_TODO_TASK_FULFILLED: {
+        case aTypes.DONE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
             resolveAwaitingItem(awaitingDoneToDoTasks, id);
@@ -192,7 +179,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на изменение статуса задания на "Выполнено" вернул ошибку
-        case DONE_TODO_TASK_REJECTED: {
+        case aTypes.DONE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
             const toDoTaskList = state.toDoTaskList.map(task => {
                 if (task.id === id) {
@@ -212,7 +199,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
         // запрос на удаление задания по идентификатору вернул
         // идентификатор удаленного задания
-        case DELETE_TODO_TASK: {
+        case aTypes.DELETE_TODO_TASK: {
             const toDoTaskList = [...state.toDoTaskList].reduce((result, task) => {
                 if (task.id === payload) {
                     awaitingDeleteToDoTasks.push(task);
@@ -226,7 +213,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             return { ...state, toDoTaskList, err: null };
         }
 
-        case DELETE_TODO_TASK_FULFILLED: {
+        case aTypes.DELETE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
             awaitingDeleteToDoTasks = resolveAwaitingItem(awaitingDeleteToDoTasks, id);
@@ -235,7 +222,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на удаление задания по идентификатору вернул ошибку
-        case DELETE_TODO_TASK_REJECTED: {
+        case aTypes.DELETE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
             const awaitingItem = awaitingDeleteToDoTasks.find(awaitingItem => awaitingItem.id === id);
             let toDoTaskList = [...state.toDoTaskList];
@@ -250,7 +237,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на список заданий вернул новый список заданий
-        case GET_TODO_TASKS_FOR_DATE_FULFILLED: {
+        case aTypes.GET_TODO_TASKS_FOR_DATE_FULFILLED: {
             let { selectedTasksDate, toDoTaskList } = payload;
 
             toDoTaskList = toDoTaskList.map(task => {
@@ -264,14 +251,14 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // запрос на список заданий вернул ошибку
-        case GET_TODO_TASKS_FOR_DATE_REJECTED: {
+        case aTypes.GET_TODO_TASKS_FOR_DATE_REJECTED: {
             const { selectedTasksDate, err } = payload;
 
             return { ...state, selectedTasksDate, err };
         }
 
         // выбор задания для редактирование по идентификатору
-        case SET_MUTABLE_ITEM_ID: {
+        case aTypes.SET_MUTABLE_ITEM_ID: {
             let mutableItem = state.toDoTaskList.find(task => task.id === payload);
 
             if (!mutableItem) {
@@ -282,7 +269,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // изменение даты редактируемого задания
-        case SET_MUTABLE_ITEM_DATE: {
+        case aTypes.SET_MUTABLE_ITEM_DATE: {
             const mutableItem = { ...state.mutableItem };
 
             mutableItem.date = payload;
@@ -291,7 +278,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         }
 
         // изменение текста редактируемого задания
-        case SET_MUTABLE_ITEM_TASK_TEXT: {
+        case aTypes.SET_MUTABLE_ITEM_TASK_TEXT: {
             const mutableItem = { ...state.mutableItem };
 
             mutableItem.taskText = payload;

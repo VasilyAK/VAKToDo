@@ -8,5 +8,6 @@ module.exports = {
     moduleNameMapper: {
         '^.+\\.(sa|sc|c)ss$': 'identity-obj-proxy',
         '^.+\\.{png|gif|jpe?g|svg}$': '<rootDir>jest.transform.js',
+        '^~(.*)$': '<rootDir>client$1',
     },
 };
