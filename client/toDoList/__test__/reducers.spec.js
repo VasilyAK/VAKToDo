@@ -1,8 +1,10 @@
-jest.mock('~/toDoList/helpers');
-
 import reducersToDoList from '../reducers';
 import aTypes from '../actionTypes';
 import * as HF from '~/toDoList/helpers';
+import * as mockPending from '~/classes/Pending';
+
+jest.mock('~/toDoList/helpers');
+jest.mock('~/classes/Pending');
 
 const initMutableItem = {
     id: null,
@@ -19,7 +21,7 @@ const testTask = {
 
 describe('action type CREATE_TODO_TASK', () => {
     afterEach(() => {
-        jest.resetAllMocks();
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
@@ -54,6 +56,7 @@ describe('action type CREATE_TODO_TASK', () => {
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(1);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(1);
+        expect(mockPending.mockAdd).toHaveBeenCalledTimes(1);
     });
 
     it('should create task without equalDays', () => {
@@ -86,5 +89,6 @@ describe('action type CREATE_TODO_TASK', () => {
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(0);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(1);
+        expect(mockPending.mockAdd).toHaveBeenCalledTimes(1);
     });
 });

@@ -1,10 +1,11 @@
 import aTypes from './actionTypes';
-import { isEqualDays, resolveAwaitingItem, sortTaskListByDate, findAvailableNewTaskId } from '~/toDoList/helpers';
+import Pending from '~/classes/Pending';
+import { isEqualDays, sortTaskListByDate, findAvailableNewTaskId } from '~/toDoList/helpers';
 
-let awaitingCreateToDoTasks = [];
-let awaitingChangeToDoTasks = [];
-let awaitingDoneToDoTasks = [];
-let awaitingDeleteToDoTasks = [];
+let awaitingCreateToDoTasks = new Pending();
+let awaitingChangeToDoTasks = new Pending();
+let awaitingDoneToDoTasks = new Pending();
+let awaitingDeleteToDoTasks = new Pending();
 
 const initMutableItem = {
     id: null,
@@ -13,7 +14,7 @@ const initMutableItem = {
 };
 
 const initState = {
-    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks),
+    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
     selectedTasksDate: new Date(),
     mutableItem: { ...initMutableItem },
     toDoTaskList: [],
@@ -24,6 +25,8 @@ const reducersToDoList = (state = initState, { type, payload }) => {
     switch (type) {
         // запрос на создание нового задания вернул новое задание
         case aTypes.CREATE_TODO_TASK: {
+            awaitingCreateToDoTasks = awaitingCreateToDoTasks.add(payload);
+
             if (isEqualDays(state.selectedTasksDate, payload.date)) {
                 const mutableItem = { ...initMutableItem };
                 let toDoTaskList = [...state.toDoTaskList];
@@ -33,28 +36,26 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
                 return {
                     ...state,
-                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks),
+                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
                     mutableItem,
                     toDoTaskList,
                     err: null,
                 };
             }
 
-            awaitingCreateToDoTasks.push(payload);
-
             return {
                 ...state,
-                newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks),
+                newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
                 err: null,
             };
         }
 
         case aTypes.CREATE_TODO_TASK_FULFILLED: {
             const { id, newId } = payload;
-            const awaitingItem = awaitingCreateToDoTasks.find(awaitingItem => awaitingItem.id === id);
+            const awaitingItem = awaitingCreateToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
-            if (awaitingItem !== -1 && isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+            if (awaitingItem !== null && isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                 toDoTaskList = toDoTaskList.map(task => {
                     if (task.id === id) {
                         task.id = newId;
@@ -63,7 +64,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     return task;
                 });
 
-                awaitingCreateToDoTasks = resolveAwaitingItem(awaitingCreateToDoTasks, id);
+                awaitingCreateToDoTasks = awaitingCreateToDoTasks.resolve(id);
             }
 
             return { ...state, toDoTaskList, err: null };
@@ -72,10 +73,10 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на создание нового задания вернул ошибку
         case aTypes.CREATE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingCreateToDoTasks.find(awaitingItem => awaitingItem.id === id);
+            const awaitingItem = awaitingCreateToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
-            if (awaitingItem !== -1 && isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+            if (awaitingItem !== null && isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                 toDoTaskList = toDoTaskList.reduce((result, task) => {
                     if (task.id !== id) {
                         result.push(task);
@@ -84,7 +85,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     return result;
                 }, []);
 
-                awaitingCreateToDoTasks = resolveAwaitingItem(awaitingCreateToDoTasks, id);
+                awaitingCreateToDoTasks = awaitingCreateToDoTasks.resolve(id);
             }
 
             return { ...state, toDoTaskList, err };
@@ -100,7 +101,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                         result.push(payload);
                     }
 
-                    awaitingChangeToDoTasks.push(task);
+                    awaitingChangeToDoTasks = awaitingChangeToDoTasks.add(task);
                 } else {
                     result.push(task);
                 }
@@ -116,7 +117,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.CHANGE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
-            awaitingChangeToDoTasks = resolveAwaitingItem(awaitingChangeToDoTasks, id);
+            awaitingChangeToDoTasks = awaitingChangeToDoTasks.resolve(id);
 
             return { ...state, err: null };
         }
@@ -124,10 +125,10 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на изменение задания вернул ошибку
         case aTypes.CHANGE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingChangeToDoTasks.find(awaitingItem => awaitingItem.id === id);
+            const awaitingItem = awaitingChangeToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
-            if (awaitingItem !== -1) {
+            if (awaitingItem !== null) {
                 if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                     let isTaskRestored = false;
 
@@ -147,7 +148,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 }
 
                 toDoTaskList = sortTaskListByDate(toDoTaskList);
-                awaitingChangeToDoTasks = resolveAwaitingItem(awaitingChangeToDoTasks, id);
+                awaitingChangeToDoTasks = awaitingChangeToDoTasks.resolve(id);
             }
 
             return { ...state, toDoTaskList, err };
@@ -160,7 +161,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 if (task.id === payload) {
                     const { id, status } = task;
 
-                    awaitingDoneToDoTasks.push({ id, status });
+                    awaitingDoneToDoTasks = awaitingDoneToDoTasks.add({ id, status });
                     task.status = 'done';
                 }
 
@@ -173,7 +174,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DONE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
-            resolveAwaitingItem(awaitingDoneToDoTasks, id);
+            awaitingDoneToDoTasks = awaitingDoneToDoTasks.resolve(id);
 
             return { ...state, err: null };
         }
@@ -183,11 +184,11 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             const { id, err } = payload;
             const toDoTaskList = state.toDoTaskList.map(task => {
                 if (task.id === id) {
-                    const awaitingItem = awaitingDoneToDoTasks.find(awaitingItem => awaitingItem.id === id);
+                    const awaitingItem = awaitingDoneToDoTasks.findById(id);
 
-                    if (awaitingItem !== -1) {
+                    if (awaitingItem !== null) {
                         task.status = awaitingItem.status;
-                        awaitingDoneToDoTasks = resolveAwaitingItem(awaitingDoneToDoTasks, id);
+                        awaitingDoneToDoTasks = awaitingDoneToDoTasks.resolve(id);
                     }
                 }
 
@@ -202,7 +203,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DELETE_TODO_TASK: {
             const toDoTaskList = [...state.toDoTaskList].reduce((result, task) => {
                 if (task.id === payload) {
-                    awaitingDeleteToDoTasks.push(task);
+                    awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.add(task);
                 } else {
                     result.push(task);
                 }
@@ -216,7 +217,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DELETE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
-            awaitingDeleteToDoTasks = resolveAwaitingItem(awaitingDeleteToDoTasks, id);
+            awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.resolve(id);
 
             return { ...state, err: null };
         }
@@ -224,13 +225,13 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на удаление задания по идентификатору вернул ошибку
         case aTypes.DELETE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingDeleteToDoTasks.find(awaitingItem => awaitingItem.id === id);
+            const awaitingItem = awaitingDeleteToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
             if (awaitingItem !== -1) {
                 toDoTaskList.push(awaitingItem);
                 toDoTaskList = sortTaskListByDate(toDoTaskList);
-                awaitingDeleteToDoTasks = resolveAwaitingItem(awaitingDeleteToDoTasks, id);
+                awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.resolve(id);
             }
 
             return { ...state, toDoTaskList, err };

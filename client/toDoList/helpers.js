@@ -12,22 +12,6 @@ export function isEqualDays(date1, date2) {
 }
 
 /**
- * Удалить из списка ожидания разрешенный элемент
- * @param {Object[]} awaitingList список ожидающих элементов
- * @param {String} id идентификатор разрешенного элемента
- * @return {Object[]} список еще неразрешенных элементов
- */
-export function resolveAwaitingItem(awaitingList, id) {
-    return (awaitingList = awaitingList.reduce((result, awaitingItem) => {
-        if (awaitingItem.id !== id) {
-            result.push(awaitingItem);
-        }
-
-        return result;
-    }, []));
-}
-
-/**
  * Сортирует массив заданий по дате
  * @param {FullTask[]} taskList массив с заданиями
  * @return {FullTask[]} отсортированный по дате массив с заданиями
