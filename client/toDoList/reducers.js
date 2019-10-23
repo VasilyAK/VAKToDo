@@ -55,19 +55,30 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             const awaitingItem = awaitingCreateToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
-            if (awaitingItem !== null && isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
-                toDoTaskList = toDoTaskList.map(task => {
-                    if (task.id === id) {
-                        task.id = newId;
-                    }
+            if (awaitingItem !== null) {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    toDoTaskList = toDoTaskList.map(task => {
+                        if (task.id === id) {
+                            task.id = newId;
+                        }
 
-                    return task;
-                });
+                        return task;
+                    });
+                }
 
                 awaitingCreateToDoTasks = awaitingCreateToDoTasks.resolve(id);
+
+                return {
+                    ...state,
+                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+                    toDoTaskList,
+                    err: null,
+                };
+            } else {
+                console.log(`Server returned the answer with task id ${id} which was not expected`);
             }
 
-            return { ...state, toDoTaskList, err: null };
+            return { ...state, err: null };
         }
 
         // запрос на создание нового задания вернул ошибку

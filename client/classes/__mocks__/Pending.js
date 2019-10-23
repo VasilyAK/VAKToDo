@@ -1,14 +1,14 @@
-export const mockAdd = jest.fn();
-export const mockResolve = jest.fn();
+export const mockAdd = jest.fn().mockReturnThis();
+export const mockResolve = jest.fn().mockReturnThis();
 export const mockFindById = jest.fn();
+class Pending {
+    constructor() {
+        this.items = [];
+    }
+}
 
-const Pending = jest.fn().mockImplementation(() => {
-    return {
-        items: [],
-        add: mockAdd.mockReturnThis(),
-        resolve: mockResolve.mockReturnThis(),
-        findById: mockFindById,
-    };
-});
+Pending.prototype.add = mockAdd;
+Pending.prototype.resolve = mockResolve;
+Pending.prototype.findById = mockFindById;
 
 export default Pending;
