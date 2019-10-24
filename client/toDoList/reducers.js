@@ -131,8 +131,6 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 return result;
             }, []);
 
-            toDoTaskList = sortTaskListByDate(toDoTaskList);
-
             return { ...state, mutableItem, toDoTaskList, err: null };
         }
 

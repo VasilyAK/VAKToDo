@@ -53,15 +53,14 @@ describe('action type CREATE_TODO_TASK', () => {
 
         // ASSERT
         expect(result).toEqual({
+            ...initState,
             newTaskId: 'newTask2',
-            mutableItem: initMutableItem,
-            toDoTaskList: [],
-            err: null,
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(0);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(1);
         expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.add).toHaveBeenCalledWith(action.payload);
     });
 
     it('should create task with equalDays', () => {
@@ -87,15 +86,15 @@ describe('action type CREATE_TODO_TASK', () => {
 
         // ASSERT
         expect(result).toEqual({
+            ...initState,
             newTaskId: 'newTask2',
-            mutableItem: initMutableItem,
             toDoTaskList: [testTask],
-            err: null,
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(1);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(1);
         expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.add).toHaveBeenCalledWith(action.payload);
     });
 });
 
@@ -122,12 +121,7 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
         const result = reducersToDoList(initState, action);
 
         // ASSERT
-        expect(result).toEqual({
-            newTaskId: 'newTask2',
-            mutableItem: initMutableItem,
-            toDoTaskList: [{ ...testTask, id: 'newTask1' }],
-            err: null,
-        });
+        expect(result).toEqual(initState,);
         expect(HF.isEqualDays).toHaveBeenCalledTimes(0);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(0);
         expect(HF.taskErrorMessage).toHaveBeenCalledTimes(1);
@@ -158,12 +152,7 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
         const result = reducersToDoList(initState, action);
 
         // ASSERT
-        expect(result).toEqual({
-            newTaskId: 'newTask2',
-            mutableItem: initMutableItem,
-            toDoTaskList: [{ ...testTask, id: 'newTask1' }],
-            err: null,
-        });
+        expect(result).toEqual(initState);
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(1);
         expect(HF.taskErrorMessage).toHaveBeenCalledTimes(0);
@@ -189,17 +178,16 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
 
         HF.isEqualDays = jest.fn(() => true);
         HF.findAvailableNewTaskId = jest.fn(() => 'newTask1');
-        Pending.prototype.findById = jest.fn(() => ({ ...testTask, id: action.payload.id  }));
+        Pending.prototype.findById = jest.fn(() => ({ ...testTask, id: action.payload.id }));
 
         // ACT
         const result = reducersToDoList(initState, action);
 
         // ASSERT
         expect(result).toEqual({
+            ...initState,
             newTaskId: 'newTask1',
-            mutableItem: initMutableItem,
             toDoTaskList: [{ ...testTask, id: 'someNewId' }],
-            err: null,
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(1);
@@ -233,9 +221,7 @@ describe('action type CREATE_TODO_TASK_REJECTED', () => {
 
         // ASSERT
         expect(result).toEqual({
-            newTaskId: 'newTask2',
-            mutableItem: initMutableItem,
-            toDoTaskList: [{ ...testTask, id: 'newTask1' }],
+            ...initState,
             err: 'someErr',
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(0);
@@ -270,9 +256,7 @@ describe('action type CREATE_TODO_TASK_REJECTED', () => {
 
         // ASSERT
         expect(result).toEqual({
-            newTaskId: 'newTask2',
-            mutableItem: initMutableItem,
-            toDoTaskList: [{ ...testTask, id: 'newTask1' }],
+            ...initState,
             err: 'someErr',
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
@@ -307,8 +291,8 @@ describe('action type CREATE_TODO_TASK_REJECTED', () => {
 
         // ASSERT
         expect(result).toEqual({
+            ...initState,
             newTaskId: 'newTask1',
-            mutableItem: initMutableItem,
             toDoTaskList: [],
             err: 'someErr',
         });
@@ -317,5 +301,85 @@ describe('action type CREATE_TODO_TASK_REJECTED', () => {
         expect(HF.taskErrorMessage).toHaveBeenCalledTimes(0);
         expect(Pending.prototype.findById).toHaveBeenCalledTimes(1);
         expect(Pending.prototype.resolve).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('action type CHANGE_TODO_TASK', () => {
+    it('should change task without equalDays', () => {
+        // ARRANGE
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [{
+                ...testTask,
+                id: 'someId1',
+                date: 'someDate1',
+                taskText: 'someText1',
+            }],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK,
+            payload: {
+                ...testTask,
+                id: 'someId1',
+                date: 'someDate2',
+                taskText: 'someText2',
+            },
+        };
+
+        HF.isEqualDays = jest.fn(() => false);
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            toDoTaskList: [],
+        });
+        expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.add).toHaveBeenCalledWith(initState.toDoTaskList[0]);
+    });
+
+    it('should change task with equalDays', () => {
+        // ARRANGE
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [{
+                ...testTask,
+                id: 'someId1',
+                date: 'someDate1',
+                taskText: 'someText1',
+            }],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK,
+            payload: {
+                ...testTask,
+                id: 'someId1',
+                date: 'someDate2',
+                taskText: 'someText2',
+            },
+        };
+
+        HF.isEqualDays = jest.fn(() => true);
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            toDoTaskList: [action.payload],
+        });
+        expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.add).toHaveBeenCalledWith(initState.toDoTaskList[0]);
     });
 });
