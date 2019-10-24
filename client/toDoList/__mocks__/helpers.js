@@ -6,3 +6,6 @@ export const sortTaskListByDate = jest.fn();
 
 /** Найти доступный идентификатор для нового задания */
 export const findAvailableNewTaskId = jest.fn();
+
+/** Сообщение об ошибке. Сервер вернул идентификатор задания, который не ожидает разрешения. */
+export const taskErrorMessage = jest.fn(() => 'someErrMessage');

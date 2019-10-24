@@ -33,7 +33,7 @@ export async function fetchData(URL, options, timeout = 15000) {
         if (response.ok) {
             return await response.json();
         } else {
-            throw { err: response.status || response.timerError };
+            throw { err: new Error(`Error ${response.status}`) || response.timerError };
         }
     } catch (err) {
         return err;

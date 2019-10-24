@@ -1,6 +1,6 @@
 import aTypes from './actionTypes';
 import Pending from '~/classes/Pending';
-import { isEqualDays, sortTaskListByDate, findAvailableNewTaskId } from '~/toDoList/helpers';
+import { isEqualDays, sortTaskListByDate, findAvailableNewTaskId, taskErrorMessage } from '~/toDoList/helpers';
 
 let awaitingCreateToDoTasks = new Pending();
 let awaitingChangeToDoTasks = new Pending();
@@ -75,7 +75,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     err: null,
                 };
             } else {
-                console.log(`Server returned the answer with task id ${id} which was not expected`);
+                console.log(taskErrorMessage(id));
             }
 
             return { ...state, err: null };
@@ -87,16 +87,27 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             const awaitingItem = awaitingCreateToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
-            if (awaitingItem !== null && isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
-                toDoTaskList = toDoTaskList.reduce((result, task) => {
-                    if (task.id !== id) {
-                        result.push(task);
-                    }
+            if (awaitingItem !== null) {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    toDoTaskList = toDoTaskList.reduce((result, task) => {
+                        if (task.id !== id) {
+                            result.push(task);
+                        }
 
-                    return result;
-                }, []);
+                        return result;
+                    }, []);
+                }
 
                 awaitingCreateToDoTasks = awaitingCreateToDoTasks.resolve(id);
+
+                return {
+                    ...state,
+                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+                    toDoTaskList,
+                    err: err,
+                };
+            } else {
+                console.log(taskErrorMessage(id));
             }
 
             return { ...state, toDoTaskList, err };

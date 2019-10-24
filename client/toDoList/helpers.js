@@ -40,3 +40,12 @@ export function findAvailableNewTaskId(awaitingList) {
 
     return `newTask${awaitingList.length}`;
 }
+
+/**
+ * Сообщение об ошибке. Сервер вернул идентификатор задания, который не ожидает разрешения.
+ * @param {String} id идентификатор задания
+ * @return {String} текст ошибки
+ */
+export function taskErrorMessage(id) {
+    return `Server returned the answer with task id ${id} which was not expected`;
+}
