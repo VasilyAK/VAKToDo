@@ -121,7 +121,7 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
         const result = reducersToDoList(initState, action);
 
         // ASSERT
-        expect(result).toEqual(initState,);
+        expect(result).toEqual(initState);
         expect(HF.isEqualDays).toHaveBeenCalledTimes(0);
         expect(HF.findAvailableNewTaskId).toHaveBeenCalledTimes(0);
         expect(HF.taskErrorMessage).toHaveBeenCalledTimes(1);
@@ -310,12 +310,14 @@ describe('action type CHANGE_TODO_TASK', () => {
         const initState = {
             newTaskId: 'newTask1',
             mutableItem: initMutableItem,
-            toDoTaskList: [{
-                ...testTask,
-                id: 'someId1',
-                date: 'someDate1',
-                taskText: 'someText1',
-            }],
+            toDoTaskList: [
+                {
+                    ...testTask,
+                    id: 'someId1',
+                    date: 'someDate1',
+                    taskText: 'someText1',
+                },
+            ],
             err: null,
         };
 
@@ -349,12 +351,14 @@ describe('action type CHANGE_TODO_TASK', () => {
         const initState = {
             newTaskId: 'newTask1',
             mutableItem: initMutableItem,
-            toDoTaskList: [{
-                ...testTask,
-                id: 'someId1',
-                date: 'someDate1',
-                taskText: 'someText1',
-            }],
+            toDoTaskList: [
+                {
+                    ...testTask,
+                    id: 'someId1',
+                    date: 'someDate1',
+                    taskText: 'someText1',
+                },
+            ],
             err: null,
         };
 
@@ -381,5 +385,221 @@ describe('action type CHANGE_TODO_TASK', () => {
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
         expect(Pending.prototype.add).toHaveBeenCalledWith(initState.toDoTaskList[0]);
+    });
+});
+
+describe('action type CHANGE_TODO_TASK_FULFILLED', () => {
+    it('should resolve change task', () => {
+        // ARRANGE
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [testTask],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK_FULFILLED,
+            payload: 'someId1',
+        };
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual(initState);
+        expect(Pending.prototype.resolve).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('action type CHANGE_TODO_TASK_REJECTED', () => {
+    it('should reject change task if pending item not exist', () => {
+        // ARRANGE
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [
+                {
+                    ...testTask,
+                    id: 'someId1',
+                    date: 'someDate2',
+                    taskText: 'someText2',
+                },
+            ],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK_REJECTED,
+            payload: {
+                id: 'someId2',
+                err: 'someErr',
+            },
+        };
+
+        Pending.prototype.findById = jest.fn(() => null);
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            err: 'someErr',
+        });
+        expect(HF.isEqualDays).toHaveBeenCalledTimes(0);
+        expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(0);
+        expect(HF.taskErrorMessage).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.findById).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.resolve).toHaveBeenCalledTimes(0);
+    });
+
+    it('should reject change task if pending item exist without equalDays', () => {
+        // ARRANGE
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [
+                {
+                    ...testTask,
+                    id: 'someId1',
+                    date: 'someDate2',
+                    taskText: 'someText2',
+                },
+            ],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK_REJECTED,
+            payload: {
+                id: 'someId1',
+                err: 'someErr',
+            },
+        };
+
+        HF.isEqualDays = jest.fn(() => false);
+        Pending.prototype.findById = jest.fn(() => ({
+            ...testTask,
+            id: 'someId1',
+            date: 'someDate1',
+            taskText: 'someText1',
+        }));
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            err: 'someErr',
+        });
+        expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
+        expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(0);
+        expect(HF.taskErrorMessage).toHaveBeenCalledTimes(0);
+        expect(Pending.prototype.findById).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.resolve).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject change task if pending item exist with equalDays and awaiting id equal current id', () => {
+        // ARRANGE
+        const currentTask = {
+            ...testTask,
+            id: 'someId1',
+            date: 'someDate2',
+            taskText: 'someText2',
+        };
+
+        const awaitingTask = {
+            ...testTask,
+            id: 'someId1',
+            date: 'someDate1',
+            taskText: 'someText1',
+        };
+
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [currentTask],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK_REJECTED,
+            payload: {
+                id: 'someId1',
+                err: 'someErr',
+            },
+        };
+
+        HF.isEqualDays = jest.fn(() => true);
+        HF.sortTaskListByDate = jest.fn(() => [awaitingTask]);
+        Pending.prototype.findById = jest.fn(() => awaitingTask);
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            toDoTaskList: [awaitingTask],
+            err: 'someErr',
+        });
+        expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
+        expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(1);
+        expect(HF.taskErrorMessage).toHaveBeenCalledTimes(0);
+        expect(Pending.prototype.findById).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.resolve).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject change task if pending item exist with equalDays and awaiting id not equal current id', () => {
+        // ARRANGE
+        const currentTask = {
+            ...testTask,
+            id: 'someId1',
+            date: 'someDate2',
+            taskText: 'someText2',
+        };
+
+        const awaitingTask = {
+            ...testTask,
+            id: 'someId2',
+            date: 'someDate1',
+            taskText: 'someText1',
+        };
+
+        const initState = {
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [currentTask],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.CHANGE_TODO_TASK_REJECTED,
+            payload: {
+                id: 'someId1',
+                err: 'someErr',
+            },
+        };
+
+        HF.isEqualDays = jest.fn(() => true);
+        HF.sortTaskListByDate = jest.fn(() => [currentTask, awaitingTask]);
+        Pending.prototype.findById = jest.fn(() => awaitingTask);
+
+        // ACT
+        const result = reducersToDoList(initState, action);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            toDoTaskList: [currentTask, awaitingTask],
+            err: 'someErr',
+        });
+        expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
+        expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(1);
+        expect(HF.taskErrorMessage).toHaveBeenCalledTimes(0);
+        expect(Pending.prototype.findById).toHaveBeenCalledTimes(1);
+        expect(Pending.prototype.resolve).toHaveBeenCalledTimes(1);
     });
 });

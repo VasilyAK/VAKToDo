@@ -165,10 +165,13 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     if (!isTaskRestored) {
                         toDoTaskList.push(awaitingItem);
                     }
+
+                    toDoTaskList = sortTaskListByDate(toDoTaskList);
                 }
 
-                toDoTaskList = sortTaskListByDate(toDoTaskList);
                 awaitingChangeToDoTasks = awaitingChangeToDoTasks.resolve(id);
+            } else {
+                console.log(taskErrorMessage(id));
             }
 
             return { ...state, toDoTaskList, err };
