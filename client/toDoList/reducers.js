@@ -182,9 +182,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DONE_TODO_TASK: {
             const toDoTaskList = state.toDoTaskList.map(task => {
                 if (task.id === payload) {
-                    const { id, status } = task;
-
-                    awaitingDoneToDoTasks = awaitingDoneToDoTasks.add({ id, status });
+                    awaitingDoneToDoTasks = awaitingDoneToDoTasks.add({ ...task });
                     task.status = 'done';
                 }
 
@@ -205,18 +203,21 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на изменение статуса задания на "Выполнено" вернул ошибку
         case aTypes.DONE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const toDoTaskList = state.toDoTaskList.map(task => {
-                if (task.id === id) {
-                    const awaitingItem = awaitingDoneToDoTasks.findById(id);
+            const awaitingItem = awaitingDoneToDoTasks.findById(id);
+            let toDoTaskList = [...state.toDoTaskList];
 
-                    if (awaitingItem !== null) {
+            if (awaitingItem !== null) {
+                toDoTaskList = state.toDoTaskList.map(task => {
+                    if (task.id === id) {
                         task.status = awaitingItem.status;
-                        awaitingDoneToDoTasks = awaitingDoneToDoTasks.resolve(id);
                     }
-                }
 
-                return task;
-            });
+                    return task;
+                });
+                awaitingDoneToDoTasks = awaitingDoneToDoTasks.resolve(id);
+            } else {
+                console.log(taskErrorMessage(id));
+            }
 
             return { ...state, toDoTaskList, err };
         }
@@ -251,10 +252,15 @@ const reducersToDoList = (state = initState, { type, payload }) => {
             const awaitingItem = awaitingDeleteToDoTasks.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
-            if (awaitingItem !== -1) {
-                toDoTaskList.push(awaitingItem);
-                toDoTaskList = sortTaskListByDate(toDoTaskList);
+            if (awaitingItem !== null) {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    toDoTaskList.push(awaitingItem);
+                    toDoTaskList = sortTaskListByDate(toDoTaskList);
+                }
+
                 awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.resolve(id);
+            } else {
+                console.log(taskErrorMessage(id));
             }
 
             return { ...state, toDoTaskList, err };
