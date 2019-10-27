@@ -389,7 +389,10 @@ describe('action type CHANGE_TODO_TASK', () => {
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.isEqualDays).toHaveBeenCalledWith(initState.selectedTasksDate, action.payload.date);
         expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
-        expect(Pending.prototype.add).toHaveBeenCalledWith(initState.toDoTaskList[0]);
+        expect(Pending.prototype.add).toHaveBeenCalledWith({
+            ...initState.toDoTaskList[0],
+            _changes: awaitingTask,
+        });
     });
 
     it('should change task with equalDays', () => {
@@ -422,7 +425,10 @@ describe('action type CHANGE_TODO_TASK', () => {
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.isEqualDays).toHaveBeenCalledWith(initState.selectedTasksDate, action.payload.date);
         expect(Pending.prototype.add).toHaveBeenCalledTimes(1);
-        expect(Pending.prototype.add).toHaveBeenCalledWith(initState.toDoTaskList[0]);
+        expect(Pending.prototype.add).toHaveBeenCalledWith({
+            ...initState.toDoTaskList[0],
+            _changes: awaitingTask,
+        });
     });
 });
 
@@ -463,6 +469,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
         ...testTask,
         id: 'someId1',
         taskText: 'someText1',
+        _changes: currentTask,
     };
 
     it('should reject change task if pending item not exist', () => {
@@ -560,6 +567,9 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
             },
         };
 
+        const awaitingItemWithoutChanges = { ...awaitingTask };
+
+        delete awaitingItemWithoutChanges._changes;
         HF.isEqualDays = jest.fn(() => true);
         HF.sortTaskListByDate = jest.fn(taskList => taskList);
         Pending.prototype.findById = jest.fn(() => awaitingTask);
@@ -570,7 +580,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
         // ASSERT
         expect(result).toEqual({
             ...initState,
-            toDoTaskList: [awaitingTask],
+            toDoTaskList: [awaitingItemWithoutChanges],
             err: 'someErr',
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
@@ -602,6 +612,9 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
             },
         };
 
+        const awaitingItemWithoutChanges = { ...awaitingTask };
+
+        delete awaitingItemWithoutChanges._changes;
         HF.isEqualDays = jest.fn(() => true);
         HF.sortTaskListByDate = jest.fn(taskList => taskList);
         Pending.prototype.findById = jest.fn(() => ({ ...awaitingTask, id: action.payload.id }));
@@ -612,7 +625,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
         // ASSERT
         expect(result).toEqual({
             ...initState,
-            toDoTaskList: [currentTask, { ...awaitingTask, id: action.payload.id }],
+            toDoTaskList: [currentTask, { ...awaitingItemWithoutChanges, id: action.payload.id }],
             err: 'someErr',
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);

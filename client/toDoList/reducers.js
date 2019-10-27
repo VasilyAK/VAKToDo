@@ -123,7 +123,10 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                         result.push(payload);
                     }
 
-                    awaitingChangeToDoTasks = awaitingChangeToDoTasks.add(task);
+                    awaitingChangeToDoTasks = awaitingChangeToDoTasks.add({
+                        ...task,
+                        _changes: payload,
+                    });
                 } else {
                     result.push(task);
                 }
@@ -150,20 +153,23 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
             if (awaitingItem !== null) {
                 if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    const awaitingItemWithoutChanges = { ...awaitingItem };
                     let isTaskRestored = false;
+
+                    delete awaitingItemWithoutChanges._changes;
 
                     toDoTaskList = toDoTaskList.map(task => {
                         if (task.id === awaitingItem.id) {
                             isTaskRestored = true;
 
-                            return awaitingItem;
+                            return awaitingItemWithoutChanges;
                         }
 
                         return task;
                     });
 
                     if (!isTaskRestored) {
-                        toDoTaskList.push(awaitingItem);
+                        toDoTaskList.push(awaitingItemWithoutChanges);
                     }
 
                     toDoTaskList = sortTaskListByDate(toDoTaskList);
@@ -275,6 +281,51 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
                 return task;
             });
+
+            awaitingCreateToDoTasks.items.forEach(awaitingItem => {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    if (!toDoTaskList.some(task => awaitingItem.id === task.id)) {
+                        toDoTaskList.push(awaitingItem);
+                    }
+                }
+            });
+
+            awaitingChangeToDoTasks.items.forEach(awaitingItem => {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    toDoTaskList = toDoTaskList.map(task => {
+                        if (task.id === awaitingItem.id) {
+                            return awaitingItem._changes;
+                        }
+
+                        return task;
+                    });
+                }
+            });
+
+            awaitingDoneToDoTasks.items.forEach(awaitingItem => {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    toDoTaskList = toDoTaskList.map(task => {
+                        if (task.id === awaitingItem.id) {
+                            task.status = 'done';
+                        }
+
+                        return task;
+                    });
+                }
+            });
+
+            awaitingDeleteToDoTasks.items.forEach(awaitingItem => {
+                if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
+                    toDoTaskList = toDoTaskList.reduce((result, task) => {
+                        if (task.id !== awaitingItem.id) {
+                            result.push(task);
+                        }
+
+                        return result;
+                    }, []);
+                }
+            });
+
             toDoTaskList = sortTaskListByDate(toDoTaskList);
 
             return { ...state, selectedTasksDate, toDoTaskList, err: null };
