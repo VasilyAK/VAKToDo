@@ -33,7 +33,7 @@ export function findAvailableNewTaskId(awaitingList) {
             return Number(awaitingItem.id.replace('newTask', '')) === index;
         });
 
-        if (awaitingItem === -1) {
+        if (!awaitingItem) {
             return `newTask${index}`;
         }
     }

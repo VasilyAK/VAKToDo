@@ -26,7 +26,7 @@ const privates = {
     itemAlreadyExist(id) {
         const itemExist = this.items.find(awaitingItem => awaitingItem.id === id);
 
-        return itemExist !== -1;
+        return itemExist !== undefined;
     },
 };
 
@@ -87,7 +87,7 @@ class Pending {
     findById(id) {
         const awaitingItem = this.items.find(awaitingItem => awaitingItem.id === id);
 
-        return awaitingItem !== -1 ? awaitingItem : null;
+        return awaitingItem || null;
     }
 }
 
