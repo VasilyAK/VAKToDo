@@ -2,10 +2,12 @@ import aTypes from './actionTypes';
 import Pending from '~/classes/Pending';
 import { isEqualDays, sortTaskListByDate, findAvailableNewTaskId, taskErrorMessage } from '~/toDoList/helpers';
 
-let awaitingCreateToDoTasks = new Pending();
-let awaitingChangeToDoTasks = new Pending();
-let awaitingDoneToDoTasks = new Pending();
-let awaitingDeleteToDoTasks = new Pending();
+const pendingItems = {
+    createItems: new Pending(),
+    changeItems: new Pending(),
+    doneItems: new Pending(),
+    deleteItems: new Pending(),
+};
 
 const initMutableItem = {
     id: null,
@@ -14,18 +16,18 @@ const initMutableItem = {
 };
 
 const initState = {
-    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+    newTaskId: findAvailableNewTaskId(pendingItems.createItems.items),
     selectedTasksDate: new Date(),
     mutableItem: { ...initMutableItem },
     toDoTaskList: [],
     err: null,
 };
 
-const reducersToDoList = (state = initState, { type, payload }) => {
+const reducersToDoList = (state = initState, { type, payload }, gl = pendingItems) => {
     switch (type) {
         // запрос на создание нового задания вернул новое задание
         case aTypes.CREATE_TODO_TASK: {
-            awaitingCreateToDoTasks = awaitingCreateToDoTasks.add(payload);
+            gl.createItems = gl.createItems.add(payload);
 
             if (isEqualDays(state.selectedTasksDate, payload.date)) {
                 const mutableItem = { ...initMutableItem };
@@ -36,7 +38,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
                 return {
                     ...state,
-                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+                    newTaskId: findAvailableNewTaskId(gl.createItems.items),
                     mutableItem,
                     toDoTaskList,
                     err: null,
@@ -45,14 +47,14 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
             return {
                 ...state,
-                newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+                newTaskId: findAvailableNewTaskId(gl.createItems.items),
                 err: null,
             };
         }
 
         case aTypes.CREATE_TODO_TASK_FULFILLED: {
             const { id, newId } = payload;
-            const awaitingItem = awaitingCreateToDoTasks.findById(id);
+            const awaitingItem = gl.createItems.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
             if (awaitingItem !== null) {
@@ -66,11 +68,11 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     });
                 }
 
-                awaitingCreateToDoTasks = awaitingCreateToDoTasks.resolve(id);
+                gl.createItems = gl.createItems.resolve(id);
 
                 return {
                     ...state,
-                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+                    newTaskId: findAvailableNewTaskId(gl.createItems.items),
                     toDoTaskList,
                     err: null,
                 };
@@ -84,7 +86,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на создание нового задания вернул ошибку
         case aTypes.CREATE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingCreateToDoTasks.findById(id);
+            const awaitingItem = gl.createItems.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
             if (awaitingItem !== null) {
@@ -98,11 +100,11 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     }, []);
                 }
 
-                awaitingCreateToDoTasks = awaitingCreateToDoTasks.resolve(id);
+                gl.createItems = gl.createItems.resolve(id);
 
                 return {
                     ...state,
-                    newTaskId: findAvailableNewTaskId(awaitingCreateToDoTasks.items),
+                    newTaskId: findAvailableNewTaskId(gl.createItems.items),
                     toDoTaskList,
                     err: err,
                 };
@@ -123,7 +125,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                         result.push(payload);
                     }
 
-                    awaitingChangeToDoTasks = awaitingChangeToDoTasks.add({
+                    gl.changeItems = gl.changeItems.add({
                         ...task,
                         _changes: payload,
                     });
@@ -140,7 +142,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.CHANGE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
-            awaitingChangeToDoTasks = awaitingChangeToDoTasks.resolve(id);
+            gl.changeItems = gl.changeItems.resolve(id);
 
             return { ...state, err: null };
         }
@@ -148,7 +150,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на изменение задания вернул ошибку
         case aTypes.CHANGE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingChangeToDoTasks.findById(id);
+            const awaitingItem = gl.changeItems.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
             if (awaitingItem !== null) {
@@ -175,7 +177,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     toDoTaskList = sortTaskListByDate(toDoTaskList);
                 }
 
-                awaitingChangeToDoTasks = awaitingChangeToDoTasks.resolve(id);
+                gl.changeItems = gl.changeItems.resolve(id);
             } else {
                 console.log(taskErrorMessage(id));
             }
@@ -188,7 +190,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DONE_TODO_TASK: {
             const toDoTaskList = state.toDoTaskList.map(task => {
                 if (task.id === payload) {
-                    awaitingDoneToDoTasks = awaitingDoneToDoTasks.add({ ...task });
+                    gl.doneItems = gl.doneItems.add({ ...task });
                     task.status = 'done';
                 }
 
@@ -201,7 +203,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DONE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
-            awaitingDoneToDoTasks = awaitingDoneToDoTasks.resolve(id);
+            gl.doneItems = gl.doneItems.resolve(id);
 
             return { ...state, err: null };
         }
@@ -209,7 +211,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на изменение статуса задания на "Выполнено" вернул ошибку
         case aTypes.DONE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingDoneToDoTasks.findById(id);
+            const awaitingItem = gl.doneItems.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
             if (awaitingItem !== null) {
@@ -220,7 +222,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
 
                     return task;
                 });
-                awaitingDoneToDoTasks = awaitingDoneToDoTasks.resolve(id);
+                gl.doneItems = gl.doneItems.resolve(id);
             } else {
                 console.log(taskErrorMessage(id));
             }
@@ -233,7 +235,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DELETE_TODO_TASK: {
             const toDoTaskList = [...state.toDoTaskList].reduce((result, task) => {
                 if (task.id === payload) {
-                    awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.add(task);
+                    gl.deleteItems = gl.deleteItems.add(task);
                 } else {
                     result.push(task);
                 }
@@ -247,7 +249,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         case aTypes.DELETE_TODO_TASK_FULFILLED: {
             const { id } = payload;
 
-            awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.resolve(id);
+            gl.deleteItems = gl.deleteItems.resolve(id);
 
             return { ...state, err: null };
         }
@@ -255,7 +257,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
         // запрос на удаление задания по идентификатору вернул ошибку
         case aTypes.DELETE_TODO_TASK_REJECTED: {
             const { id, err } = payload;
-            const awaitingItem = awaitingDeleteToDoTasks.findById(id);
+            const awaitingItem = gl.deleteItems.findById(id);
             let toDoTaskList = [...state.toDoTaskList];
 
             if (awaitingItem !== null) {
@@ -264,7 +266,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                     toDoTaskList = sortTaskListByDate(toDoTaskList);
                 }
 
-                awaitingDeleteToDoTasks = awaitingDeleteToDoTasks.resolve(id);
+                gl.deleteItems = gl.deleteItems.resolve(id);
             } else {
                 console.log(taskErrorMessage(id));
             }
@@ -282,7 +284,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 return task;
             });
 
-            awaitingCreateToDoTasks.items.forEach(awaitingItem => {
+            gl.createItems.items.forEach(awaitingItem => {
                 if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                     if (!toDoTaskList.some(task => awaitingItem.id === task.id)) {
                         toDoTaskList.push(awaitingItem);
@@ -290,7 +292,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 }
             });
 
-            awaitingChangeToDoTasks.items.forEach(awaitingItem => {
+            gl.changeItems.items.forEach(awaitingItem => {
                 if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                     toDoTaskList = toDoTaskList.map(task => {
                         if (task.id === awaitingItem.id) {
@@ -302,7 +304,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 }
             });
 
-            awaitingDoneToDoTasks.items.forEach(awaitingItem => {
+            gl.doneItems.items.forEach(awaitingItem => {
                 if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                     toDoTaskList = toDoTaskList.map(task => {
                         if (task.id === awaitingItem.id) {
@@ -314,7 +316,7 @@ const reducersToDoList = (state = initState, { type, payload }) => {
                 }
             });
 
-            awaitingDeleteToDoTasks.items.forEach(awaitingItem => {
+            gl.deleteItems.items.forEach(awaitingItem => {
                 if (isEqualDays(state.selectedTasksDate, awaitingItem.date)) {
                     toDoTaskList = toDoTaskList.reduce((result, task) => {
                         if (task.id !== awaitingItem.id) {
