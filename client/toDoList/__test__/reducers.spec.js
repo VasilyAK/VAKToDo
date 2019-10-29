@@ -44,11 +44,11 @@ afterEach(() => {
 });
 
 describe('action type CREATE_TODO_TASK', () => {
-    let awaitingTask = { ...testTask };
+    const initAwaitingTask = { ...testTask };
 
     it('should create task without equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: NOT_CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: NOT_CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -84,7 +84,7 @@ describe('action type CREATE_TODO_TASK', () => {
 
     it('should create task with equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -123,10 +123,12 @@ describe('action type CREATE_TODO_TASK', () => {
 
 describe('action type CREATE_TODO_TASK_FULFILLED', () => {
     const currentTask = { ...testTask, id: 'newTask1' };
-    let awaitingTask = { ...testTask, id: 'newTask1' };
+    const initAwaitingTask = { ...testTask, id: 'newTask1' };
 
     it('should resolve create task if pending item not exist', () => {
         // ARRANGE
+        const awaitingTask = { ...initAwaitingTask };
+
         const initState = {
             selectedTasksDate: CURRENT_DAY,
             newTaskId: 'newTask2',
@@ -158,7 +160,7 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
 
     it('should resolve create task if pending item exist without equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: NOT_CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: NOT_CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -196,7 +198,7 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
 
     it('should resolve create task if pending item exist with equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -225,7 +227,7 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
         expect(result).toEqual({
             ...initState,
             newTaskId: 'newTask1',
-            toDoTaskList: [{ ...testTask, id: 'someNewId' }],
+            toDoTaskList: [{ ...testTask, id: action.payload.newId }],
         });
         expect(HF.isEqualDays).toHaveBeenCalledTimes(1);
         expect(HF.isEqualDays).toHaveBeenCalledWith(initState.selectedTasksDate, awaitingTask.date);
@@ -239,10 +241,12 @@ describe('action type CREATE_TODO_TASK_FULFILLED', () => {
 
 describe('action type CREATE_TODO_TASK_REJECTED', () => {
     const currentTask = { ...testTask, id: 'newTask1' };
-    let awaitingTask = { ...testTask, id: 'newTask1' };
+    const initAwaitingTask = { ...testTask, id: 'newTask1' };
 
     it('should reject create task if pending item not exist', () => {
         // ARRANGE
+        const awaitingTask = { ...initAwaitingTask };
+
         const initState = {
             selectedTasksDate: CURRENT_DAY,
             newTaskId: 'newTask2',
@@ -278,7 +282,7 @@ describe('action type CREATE_TODO_TASK_REJECTED', () => {
 
     it('should reject create task if pending item exist without equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: NOT_CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: NOT_CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -319,7 +323,7 @@ describe('action type CREATE_TODO_TASK_REJECTED', () => {
 
     it('should reject create task if pending item exist with equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -368,7 +372,7 @@ describe('action type CHANGE_TODO_TASK', () => {
         taskText: 'someText1',
     };
 
-    let awaitingTask = {
+    const initAwaitingTask = {
         ...testTask,
         id: 'someId1',
         taskText: 'someText2',
@@ -376,7 +380,7 @@ describe('action type CHANGE_TODO_TASK', () => {
 
     it('should change task without equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: NOT_CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: NOT_CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -412,7 +416,7 @@ describe('action type CHANGE_TODO_TASK', () => {
 
     it('should change task with equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -480,7 +484,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
         taskText: 'someText2',
     };
 
-    let awaitingTask = {
+    const initAwaitingTask = {
         ...testTask,
         id: 'someId1',
         taskText: 'someText1',
@@ -489,6 +493,8 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
 
     it('should reject change task if pending item not exist', () => {
         // ARRANGE
+        const awaitingTask = { ...initAwaitingTask };
+
         const initState = {
             selectedTasksDate: CURRENT_DAY,
             newTaskId: 'newTask1',
@@ -524,7 +530,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
 
     it('should reject change task if pending item exist without equalDays', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: NOT_CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: NOT_CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -564,7 +570,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
 
     it('should reject change task if pending item exist with equalDays and awaiting id is equal current id', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
@@ -609,7 +615,7 @@ describe('action type CHANGE_TODO_TASK_REJECTED', () => {
 
     it('should reject change task if pending item exist with equalDays and awaiting id is not equal current id', () => {
         // ARRANGE
-        awaitingTask = { ...awaitingTask, date: CURRENT_DAY };
+        const awaitingTask = { ...initAwaitingTask, date: CURRENT_DAY };
 
         const initState = {
             selectedTasksDate: CURRENT_DAY,
