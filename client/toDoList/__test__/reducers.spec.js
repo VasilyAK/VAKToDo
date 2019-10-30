@@ -1070,7 +1070,7 @@ describe('action type GET_TODO_TASKS_FOR_DATE_FULFILLED', () => {
         ${'with done items'}       | ${[]}           | ${[]}           | ${[doneItem]} | ${[]}           | ${1}          | ${[doneItem]}
         ${'with delete items'}     | ${[]}           | ${[]}           | ${[]}         | ${[deleteItem]} | ${1}          | ${[]}
     `(
-        'should get a task list $testName',
+        'should receive a task list $testName',
         ({ createItems, changeItems, doneItems, deleteItems, equalDayCount, expected }) => {
             // ARRANGE
             const initState = {
@@ -1115,4 +1115,165 @@ describe('action type GET_TODO_TASKS_FOR_DATE_FULFILLED', () => {
             expect(HF.sortTaskListByDate).toHaveBeenCalledTimes(1);
         },
     );
+});
+
+describe('action type GET_TODO_TASKS_FOR_DATE_REJECTED', () => {
+    const currentTask = {
+        ...testTask,
+        id: 'someId1',
+    };
+
+    it('should reject to receive a task list', () => {
+        // ARRANGE
+        const initState = {
+            selectedTasksDate: CURRENT_DAY,
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [currentTask],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.GET_TODO_TASKS_FOR_DATE_REJECTED,
+            payload: {
+                selectedTasksDate: ANY_DAY,
+                err: 'someErr',
+            },
+        };
+
+        // ACT
+        const result = reducersToDoList(initState, action, gl);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            selectedTasksDate: ANY_DAY,
+            toDoTaskList: [],
+            err: 'someErr',
+        });
+    });
+});
+
+describe('action type SET_MUTABLE_ITEM_ID', () => {
+    const currentTask = {
+        ...testTask,
+        id: 'someId1',
+    };
+
+    const mutableItem = {
+        ...initMutableItem,
+        id: 'someId2',
+        taskText: '',
+    };
+
+    it('should set mutable item for new task', () => {
+        // ARRANGE
+        const initState = {
+            selectedTasksDate: CURRENT_DAY,
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [currentTask],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.SET_MUTABLE_ITEM_ID,
+            payload: mutableItem.id,
+        };
+
+        const now = new Date();
+
+        global.Date = jest.fn(() => now);
+        // ACT
+        const result = reducersToDoList(initState, action, gl);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            mutableItem: { ...mutableItem, date: now },
+            toDoTaskList: [currentTask],
+        });
+        expect(global.Date).toHaveBeenCalledTimes(1);
+    });
+
+    it('should set mutable item for change task', () => {
+        // ARRANGE
+        const initState = {
+            selectedTasksDate: CURRENT_DAY,
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [currentTask],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.SET_MUTABLE_ITEM_ID,
+            payload: currentTask.id,
+        };
+
+        // ACT
+        const result = reducersToDoList(initState, action, gl);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            mutableItem: currentTask,
+            toDoTaskList: [currentTask],
+        });
+        expect(global.Date).toHaveBeenCalledTimes(0);
+    });
+});
+
+describe('action type SET_MUTABLE_ITEM_DATE', () => {
+    it('should set mutable item date', () => {
+        // ARRANGE
+        const initState = {
+            selectedTasksDate: CURRENT_DAY,
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.SET_MUTABLE_ITEM_DATE,
+            payload: ANY_DAY,
+        };
+
+        // ACT
+        const result = reducersToDoList(initState, action, gl);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            mutableItem: { ...initState.mutableItem, date: action.payload },
+        });
+    });
+});
+
+describe('action type SET_MUTABLE_ITEM_TASK_TEXT', () => {
+    it('should set mutable item text', () => {
+        // ARRANGE
+        const initState = {
+            selectedTasksDate: CURRENT_DAY,
+            newTaskId: 'newTask1',
+            mutableItem: initMutableItem,
+            toDoTaskList: [],
+            err: null,
+        };
+
+        const action = {
+            type: aTypes.SET_MUTABLE_ITEM_TASK_TEXT,
+            payload: 'someText',
+        };
+
+        // ACT
+        const result = reducersToDoList(initState, action, gl);
+
+        // ASSERT
+        expect(result).toEqual({
+            ...initState,
+            mutableItem: { ...initState.mutableItem, taskText: action.payload },
+        });
+    });
 });

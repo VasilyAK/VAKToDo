@@ -337,7 +337,7 @@ const reducersToDoList = (state = initState, { type, payload }, gl = pendingItem
         case aTypes.GET_TODO_TASKS_FOR_DATE_REJECTED: {
             const { selectedTasksDate, err } = payload;
 
-            return { ...state, selectedTasksDate, err };
+            return { ...state, selectedTasksDate, toDoTaskList: [], err };
         }
 
         // выбор задания для редактирование по идентификатору
