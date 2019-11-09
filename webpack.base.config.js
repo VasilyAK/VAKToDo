@@ -6,9 +6,9 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 
 const PATHS = {
-    client: path.join(__dirname, 'client'),
-    build: path.join(__dirname, 'build'),
-    server: path.join(__dirname, 'server'),
+    client: path.resolve(__dirname, 'client'),
+    build: path.resolve(__dirname, 'build'),
+    server: path.resolve(__dirname, 'server'),
 };
 
 const plugins = [
@@ -35,6 +35,7 @@ module.exports = {
     output: {
         filename: path.join('assets', 'js', '[name].[hash].js'),
         path: PATHS.build,
+        publicPath: '/',
     },
     externals: {
         PATHS,

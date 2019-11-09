@@ -18,6 +18,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, 'build')));
 
+app.get('/*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'build', 'index.html'), err => {
+        if (err) {
+            res.status(500).send(err);
+        }
+    });
+});
+
 app.use('/tasks', taskRouter);
 
 server.listen(8080, () => {
